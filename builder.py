@@ -4,6 +4,7 @@ import argparse
 import logging
 import errno
 from pathlib import Path
+from collection import Collection
 
 
 # photos stuff
@@ -15,6 +16,7 @@ from pathlib import Path
 # database stuff
 # create new database
 # -- what if it already exists?
+# create collections table
 # create photos table
 # create records
 
@@ -25,7 +27,6 @@ def parse_args():
     return parser.parse_args()
 
 
-# todo rename me
 def make_sure_path_exists(path):
     try:
         Path(path).mkdir()
@@ -54,6 +55,18 @@ def get_logger():
     return new_logger
 
 
+def get_sub_items(path):
+    return [x for x in path.glob('*') if x.is_dir() or is_valid_image(x)]
+
+
+def is_valid_image(path):
+    path_name = path.name
+    for extension in ('.jpeg', '.jpg', '.png', '.gif'):
+        if extension in path_name:
+            return True
+    return False
+
+
 if __name__ == '__main__':
     args = parse_args()
     logger = get_logger()
@@ -61,6 +74,7 @@ if __name__ == '__main__':
     parent_path = Path(args.directory)
     logger.info('Collecting photos and subdirectories of \'{}\'.'.format(parent_path))
     if parent_path.is_dir():
-        logger.info('cool')
+        sub_items = get_sub_items(parent_path)
+        logger.info(sub_items)
     else:
-        logger.critical('Not a directory: {}'.format(parent_path.name))
+        logger.critical('Not a directory: {}'.format(parent_path))
