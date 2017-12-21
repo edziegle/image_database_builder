@@ -4,7 +4,6 @@ import argparse
 import logging
 import errno
 from pathlib import Path
-from collection import Collection
 
 
 # photos stuff
