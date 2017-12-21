@@ -58,9 +58,8 @@ if __name__ == '__main__':
     args = parse_args()
     logger = get_logger()
 
-    logger.info('Collecting photos and subdirectories of \'{}\'.'.format(args.directory))
-
     parent_path = Path(args.directory)
+    logger.info('Collecting photos and subdirectories of \'{}\'.'.format(parent_path))
     if parent_path.is_dir():
         logger.info('cool')
     else:
