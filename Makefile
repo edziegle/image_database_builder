@@ -5,4 +5,10 @@ PYTHON=${VENV_NAME}/bin/python3
 venv:
 	python3 -m venv $(VENV_NAME)
 
-install-test:
+install-test: requirements-test.txt
+	pip install -r requirements-test.txt
+
+install-dev: requirements.txt
+	pip install -r requirements.txt
+
+install: install-dev install-test
