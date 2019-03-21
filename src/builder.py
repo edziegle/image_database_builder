@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from os import walk
 from pathlib import Path
 
 # photos stuff
@@ -16,32 +16,31 @@ from pathlib import Path
 # create records
 import click
 
+from collection import Collection, is_collection
+from image import is_image
 from logger import get_logger
 
 
 def get_sub_items(path):
-    return [x for x in path.glob('*') if x.is_dir() or is_image(x)]
+    return [x for x in path.glob('*') if x.is_dir() or is_image(x.name)]
 
 
-def is_image(path):
-    path_name = path.name
-    for extension in ('.jpeg', '.jpg', '.png', '.gif'):
-        if extension in path_name:
-            return True
-    return False
+def scan(root_dir: str) -> list:
+    collection_list = []
+    for dir_tuple in (x for x in walk(root_dir)):
+        if is_collection(dir_tuple):
+            collection_list.append(Collection.from_dir_tuple(dir_tuple))
+
+    return collection_list
 
 
 @click.command()
 @click.argument('target_dir', type=click.Path(exists=True))
-def main(target_dir):
+def main(target_dir: Path):
     logger = get_logger()
-    parent_path = Path(target_dir)
-    logger.info(f'Collecting photos and subdirectories of \'{parent_path}\'.')
-    if parent_path.is_dir():
-        sub_items = get_sub_items(parent_path)
-        logger.info(sub_items)
-    else:
-        logger.critical(f'Not a directory: {parent_path}')
+    logger.info(f'Collecting photos and subdirectories of \'{target_dir}\'.')
+    collections = scan(str(target_dir))
+    logger.info(collections)
 
 
 if __name__ == '__main__':
