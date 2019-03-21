@@ -2,7 +2,7 @@ VENV_NAME?=venv
 VENV_ACTIVATE=. $(VENV_NAME)/bin/activate
 PYTHON=${VENV_NAME}/bin/python3
 
-.PHONY: venv install-test install-dev install test clean
+.PHONY: venv install-test install-dev install test clean upgrade-deps
 
 clean:
 	rm -rf logs
@@ -17,6 +17,10 @@ install-dev: requirements.txt
 	pip install -r requirements.txt
 
 install: install-dev install-test
+
+upgrade-deps: requirements.txt requirements-test.txt
+	pip install -r requirements.txt --upgrade
+	pip install -r requirements-test.txt --upgrade
 
 test: install-test
 	python -m pytest

@@ -1,1 +1,2 @@
-click
+click==7.0
+sqlalchemy==1.3.1

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from os import walk
 from pathlib import Path
+from sqlalchemy import create_engine
 
 # photos stuff
 # collect parent directory from user
@@ -17,12 +18,9 @@ from pathlib import Path
 import click
 
 from collection import Collection, is_collection
-from image import is_image
 from logger import get_logger
 
-
-def get_sub_items(path):
-    return [x for x in path.glob('*') if x.is_dir() or is_image(x.name)]
+engine = create_engine('sqlite:///image_database.db')
 
 
 def scan(root_dir: str) -> list:
