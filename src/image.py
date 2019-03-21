@@ -1,15 +1,36 @@
+import mimetypes
 from pathlib import Path
 
 EXTENSIONS = ('.jpeg', '.jpg', '.png', '.gif')
 
 
 class Image(object):
-    __slots__ = "path", "image_type", "metadata"
+    __slots__ = "path", "parent", "image_type", "metadata"
 
-    def __init__(self, path: Path, image_type: str, metadata: dict):
+    def __init__(self, path: Path, parent: Path, image_type: str, metadata: dict):
         self.path = path
+        self.parent = parent
         self.image_type = image_type
         self.metadata = metadata
+
+    def __repr__(self):
+        return f"Image({self.parent.name!r}: {self.path!r})"
+
+    def __str__(self):
+        return f"({self.parent.name!s}: {self.path!s})"
+
+    @classmethod
+    def from_path_str(cls, path: str, parent: Path) -> 'Image':
+        image_type = mimetypes.guess_type(path)
+        metadata = parse_metadata(path)
+        return Image(Path(path), parent, image_type[0], metadata)
+
+    def get_full_path(self) -> Path:
+        return Path(self.parent, self.path)
+
+
+def parse_metadata(path: str) -> dict:
+    return {}
 
 
 def is_image(image_name: str) -> bool:

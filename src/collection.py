@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from image import has_images
+from image import has_images, Image
 
 
 class Collection(object):
@@ -20,8 +20,8 @@ class Collection(object):
     @classmethod
     def from_dir_tuple(cls, dir_tuple: tuple) -> 'Collection':
         path = Path(dir_tuple[0])
-        images = dir_tuple[2]
-        return Collection(path.name, path, images)
+        images = [Image.from_path_str(image, path) for image in dir_tuple[2]]
+        return cls(path.name, path, images)
 
 
 def is_collection(dir_tuple: tuple) -> bool:
