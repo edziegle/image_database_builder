@@ -55,10 +55,10 @@ def get_logger():
 
 
 def get_sub_items(path):
-    return [x for x in path.glob('*') if x.is_dir() or is_valid_image(x)]
+    return [x for x in path.glob('*') if x.is_dir() or is_image(x)]
 
 
-def is_valid_image(path):
+def is_image(path):
     path_name = path.name
     for extension in ('.jpeg', '.jpg', '.png', '.gif'):
         if extension in path_name:
