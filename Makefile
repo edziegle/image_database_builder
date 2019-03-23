@@ -4,8 +4,13 @@ PYTHON=${VENV_NAME}/bin/python3
 
 .PHONY: venv install-test install-dev install test clean upgrade-deps
 
-clean:
-	rm -rf logs
+clean: clean-database clean-logs
+
+clean-logs: logs
+	rm -rf logs/*
+
+clean-database: image_database.db
+	rm image_database.db
 
 venv:
 	python3 -m venv $(VENV_NAME)
@@ -24,3 +29,6 @@ upgrade-deps: requirements.txt requirements-test.txt
 
 test: install-test
 	python -m pytest
+
+run-sample: clean
+	python src/builder.py bin/sampleindex
