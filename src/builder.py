@@ -8,16 +8,59 @@ from datetime import datetime
 import click
 
 from collection import Collection, is_collection
-from database import initialize_database, get_session, CollectionRecord, ImageRecord
+from database import initialize_database, get_session, CollectionRecord, ImageRecord, Session
 
 
 def scan(root_dir: str) -> list:
+    """
+    Finds all "collections" under a given directory.
+
+    Note:
+        A collection is defined as a flat folder (IE, no sub-folders) with image contents.
+        Any non-image files will be ignored. So long as a folder contains one or more
+        images and has no sub-directories, it will be treated as a collection.
+    :param root_dir: path to directory to recursively scan through.
+    :return: list of Collection objects.
+    """
     collection_list = []
     for dir_tuple in (x for x in walk(root_dir)):
         if is_collection(dir_tuple):
             collection_list.append(Collection.from_dir_tuple(dir_tuple))
 
     return collection_list
+
+
+def stage_collection_in_database(collection: Collection, session: Session) -> CollectionRecord:
+    """
+    Stages a given Collection object in the database as a CollectionRecord.
+    :param collection: Collection object.
+    :param session: database session.
+    :return: CollectionRecord generated from input collection.
+    """
+    collection_record = CollectionRecord.from_collection(collection)
+    session.add(collection_record)
+    session.flush()
+    return collection_record
+
+
+def stage_images_in_database(images: list, collection_record: CollectionRecord, session: Session):
+    """
+    Stages all images from the given collection record in a database as ImageRecords.
+    :param images: list of Image objects.
+    :param collection_record: CollectionRecord object corresponding to the image set.
+    :param session: database session.
+    """
+    for image in images:
+        image_record = ImageRecord.from_image(image, collection_record)
+        session.add(image_record)
+
+
+def make_sure_path_exists(path):
+    try:
+        Path(path).mkdir()
+    except OSError as exception:
+        if exception.errno != EEXIST:
+            raise
 
 
 @click.command()
@@ -31,35 +74,14 @@ def main(target_dir: Path):
     session = get_session()
 
     for collection in collections:
-        collection_record = stage_collections_in_database(collection, session)
-        stage_images_in_database(collection, collection_record, session)
+        collection_record = stage_collection_in_database(collection, session)
+        stage_images_in_database(collection.images, collection_record, session)
         logging.info(f"{collection.name} : {len(collection.images)} : {collection.path}")
 
     logging.info("Adding new items to database.")
     session.flush()
     session.commit()
     logging.info("Complete.")
-
-
-def stage_images_in_database(collection, collection_record, session):
-    for image in collection.images:
-        image_record = ImageRecord.from_image(image, collection_record)
-        session.add(image_record)
-
-
-def stage_collections_in_database(collection, session):
-    collection_record = CollectionRecord.from_collection(collection)
-    session.add(collection_record)
-    session.flush()
-    return collection_record
-
-
-def make_sure_path_exists(path):
-    try:
-        Path(path).mkdir()
-    except OSError as exception:
-        if exception.errno != EEXIST:
-            raise
 
 
 if __name__ == '__main__':
