@@ -299,3 +299,4 @@ $RECYCLE.BIN/
 .envrc
 bin
 logs
+config.ini

@@ -1,7 +1,8 @@
 import mimetypes
 from pathlib import Path
+from config import config
 
-EXTENSIONS = ('.jpeg', '.jpg', '.png', '.gif')
+EXTENSIONS = config['images']['extensions'].split(",")
 
 
 class Image(object):

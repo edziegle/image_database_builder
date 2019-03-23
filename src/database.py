@@ -6,14 +6,13 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 from collection import Collection
 from image import Image
+from config import config
 
-database_name = "image_database.db"  # todo make configurable
+database_name = config["database"]["location"]
 
 engine = create_engine(f'sqlite:///{database_name}')
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
-
-EXTENSIONS = ('.jpeg', '.jpg', '.png', '.gif')
 
 
 class ImageRecord(Base):

@@ -64,11 +64,11 @@ def make_sure_path_exists(path):
 
 
 @click.command()
-@click.argument('target_dir', type=click.Path(exists=True))
+@click.argument("target_dir", type=click.Path(exists=True))
 def main(target_dir: Path):
     logging.info("Initializing database.")
     initialize_database()
-    logging.info(f'Collecting photos and subdirectories of \'{target_dir}\'.')
+    logging.info(f"Collecting photos and sub-directories of \"{target_dir}\".")
     collections = scan(str(target_dir))
 
     session = get_session()
@@ -84,16 +84,16 @@ def main(target_dir: Path):
     logging.info("Complete.")
 
 
-if __name__ == '__main__':
-    log_dir = 'logs'
-    log_file = f'database-builder {datetime.now()}.log'
+if __name__ == "__main__":
+    log_dir = "logs"
+    log_file = f"database-builder {datetime.now()}.log"
     make_sure_path_exists(log_dir)
 
-    file_handler = logging.FileHandler(f'{log_dir}/{log_file}')
+    file_handler = logging.FileHandler(f"{log_dir}/{log_file}")
     file_handler.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.DEBUG)
     logging.basicConfig(handlers=[file_handler, stream_handler],
                         level=logging.DEBUG,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     main()

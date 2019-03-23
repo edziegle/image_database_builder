@@ -9,8 +9,8 @@ clean: clean-database clean-logs
 clean-logs: logs
 	rm -rf logs/*
 
-clean-database: image_database.db
-	rm image_database.db
+clean-database: image-database.db
+	rm image-database.db
 
 venv:
 	python3 -m venv $(VENV_NAME)
