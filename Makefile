@@ -1,8 +1,4 @@
-VENV_NAME?=venv
-VENV_ACTIVATE=. $(VENV_NAME)/bin/activate
-PYTHON=${VENV_NAME}/bin/python3
-
-.PHONY: venv install-test install-dev install test clean upgrade-deps
+.PHONY: test clean clean-logs clean-database run-sample
 
 clean: clean-database clean-logs
 
@@ -12,23 +8,19 @@ clean-logs: logs
 clean-database: image-database.db
 	rm image-database.db
 
-venv:
-	python3 -m venv $(VENV_NAME)
-
-install-test: requirements-test.txt
-	pip install -r requirements-test.txt
-
-install-dev: requirements.txt
-	pip install -r requirements.txt
-
-install: install-dev install-test
-
-upgrade-deps: requirements.txt requirements-test.txt
-	pip install -r requirements.txt --upgrade
-	pip install -r requirements-test.txt --upgrade
-
-test: install-test
-	python -m pytest
+test:
+	poetry run pytest
 
 run-sample: clean
-	python src/builder.py bin/sampleindex
+	poetry run python src/builder.py bin/sampleindex
+
+format:
+	poetry run black src tests
+	poetry run isort src tests
+
+lint:
+	poetry run flake8 src tests --max-line-length=120
+	poetry run black --check src tests
+	poetry run isort --check-only src tests
+
+prepare-for-pr: format lint test

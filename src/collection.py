@@ -1,12 +1,13 @@
 from pathlib import Path
+from typing import List
 
-from image import has_images, Image
+from image import Image, has_images
 
 
 class Collection(object):
     __slots__ = "name", "path", "images"
 
-    def __init__(self, name: str, path: Path, images: list):
+    def __init__(self, name: str, path: Path, images: List[Image]):
         self.name = name
         self.path = path
         self.images = images
@@ -18,7 +19,7 @@ class Collection(object):
         return f"({self.name!s}, {len(self.images)!s} images)"
 
     @classmethod
-    def from_dir_tuple(cls, dir_tuple: tuple) -> 'Collection':
+    def from_dir_tuple(cls, dir_tuple: tuple) -> "Collection":
         path = Path(dir_tuple[0])
         images = [Image.from_path_str(image, path) for image in dir_tuple[2]]
         return cls(path.name, path, images)

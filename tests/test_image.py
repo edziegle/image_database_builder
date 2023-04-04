@@ -1,24 +1,24 @@
-from image import *
+from image import EXTENSIONS, get_images, has_images, is_image
 
 
 def test_valid_image_jpg():
-    assert is_image('foo.jpg')
+    assert is_image("foo.jpg")
 
 
 def test_valid_image_jpeg():
-    assert is_image('foo.jpeg')
+    assert is_image("foo.jpeg")
 
 
 def test_valid_image_png():
-    assert is_image('foo.png')
+    assert is_image("foo.png")
 
 
 def test_valid_image_gif():
-    assert is_image('foo.gif')
+    assert is_image("foo.gif")
 
 
 def test_valid_image_fails_non_valid():
-    assert not is_image('foo.txt')
+    assert not is_image("foo.txt")
 
 
 def test_has_images_returns_true_with_one_image_in_list():

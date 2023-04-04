@@ -1,8 +1,9 @@
 import mimetypes
 from pathlib import Path
+
 from config import config
 
-EXTENSIONS = config['images']['extensions'].split(",")
+EXTENSIONS = config["images"]["extensions"].split(",")
 
 
 class Image(object):
@@ -21,7 +22,7 @@ class Image(object):
         return f"({self.parent.name!s}: {self.path!s})"
 
     @classmethod
-    def from_path_str(cls, path: str, parent: Path) -> 'Image':
+    def from_path_str(cls, path: str, parent: Path) -> "Image":
         image_type = mimetypes.guess_type(path)
         metadata = parse_metadata(path)
         return Image(Path(path), parent, image_type[0], metadata)

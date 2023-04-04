@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 import logging
+from datetime import datetime
 from errno import EEXIST
 from os import walk
 from pathlib import Path
-from datetime import datetime
 
 import click
 
 from collection import Collection, is_collection
-from database import initialize_database, get_session, CollectionRecord, ImageRecord, Session
+from database import (
+    CollectionRecord,
+    ImageRecord,
+    Session,
+    get_session,
+    initialize_database,
+)
 
 
 def scan(root_dir: str) -> list:
@@ -30,7 +36,9 @@ def scan(root_dir: str) -> list:
     return collection_list
 
 
-def stage_collection_in_database(collection: Collection, session: Session) -> CollectionRecord:
+def stage_collection_in_database(
+    collection: Collection, session: Session
+) -> CollectionRecord:
     """
     Stages a given Collection object in the database as a CollectionRecord.
     :param collection: Collection object.
@@ -43,7 +51,9 @@ def stage_collection_in_database(collection: Collection, session: Session) -> Co
     return collection_record
 
 
-def stage_images_in_database(images: list, collection_record: CollectionRecord, session: Session):
+def stage_images_in_database(
+    images: list, collection_record: CollectionRecord, session: Session
+):
     """
     Stages all images from the given collection record in a database as ImageRecords.
     :param images: list of Image objects.
@@ -68,7 +78,7 @@ def make_sure_path_exists(path):
 def main(target_dir: Path):
     logging.info("Initializing database.")
     initialize_database()
-    logging.info(f"Collecting photos and sub-directories of \"{target_dir}\".")
+    logging.info(f'Collecting photos and sub-directories of "{target_dir}".')
     collections = scan(str(target_dir))
 
     session = get_session()
@@ -76,7 +86,9 @@ def main(target_dir: Path):
     for collection in collections:
         collection_record = stage_collection_in_database(collection, session)
         stage_images_in_database(collection.images, collection_record, session)
-        logging.info(f"{collection.name} : {len(collection.images)} : {collection.path}")
+        logging.info(
+            f"{collection.name} : {len(collection.images)} : {collection.path}"
+        )
 
     logging.info("Adding new items to database.")
     session.flush()
@@ -93,7 +105,9 @@ if __name__ == "__main__":
     file_handler.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.DEBUG)
-    logging.basicConfig(handlers=[file_handler, stream_handler],
-                        level=logging.DEBUG,
-                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        handlers=[file_handler, stream_handler],
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     main()
