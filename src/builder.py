@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-from collection import Collection, is_collection
+from imagedirectory import ImageDirectory, is_image_directory
 from database import (
     CollectionRecord,
     ImageRecord,
@@ -24,20 +24,21 @@ def scan(root_dir: str) -> list:
     Note:
         A collection is defined as a flat folder (IE, no sub-folders) with image contents.
         Any non-image files will be ignored. So long as a folder contains one or more
-        images and has no sub-directories, it will be treated as a collection.
-    :param root_dir: path to directory to recursively scan through.
-    :return: list of Collection objects.
+        images and has no subdirectories, it will be treated as a collection.
+    Args:
+        root_dir: path to directory to recursively scan through.
+    Returns: list of ImageDirectory objects.
     """
-    collection_list = []
+    image_dir_list = []
     for dir_tuple in (x for x in walk(root_dir)):
-        if is_collection(dir_tuple):
-            collection_list.append(Collection.from_dir_tuple(dir_tuple))
+        if is_image_directory(dir_tuple):
+            image_dir_list.append(ImageDirectory.from_dir_tuple(dir_tuple))
 
-    return collection_list
+    return image_dir_list
 
 
-def stage_collection_in_database(
-    collection: Collection, session: Session
+def stage_dir_in_database(
+    collection: ImageDirectory, session: Session
 ) -> CollectionRecord:
     """
     Stages a given Collection object in the database as a CollectionRecord.
@@ -84,7 +85,7 @@ def main(target_dir: Path):
     session = get_session()
 
     for collection in collections:
-        collection_record = stage_collection_in_database(collection, session)
+        collection_record = stage_dir_in_database(collection, session)
         stage_images_in_database(collection.images, collection_record, session)
         logging.info(
             f"{collection.name} : {len(collection.images)} : {collection.path}"

@@ -4,7 +4,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, create_eng
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
-from collection import Collection
+from imagedirectory import ImageDirectory
 from config import config
 from image import Image
 
@@ -63,7 +63,7 @@ class CollectionRecord(Base):
         return f"CollectionRecord(collection_name='{self.collection_name}', collection_path='{self.collection_path}')"
 
     @classmethod
-    def from_collection(cls, collection: Collection) -> "CollectionRecord":
+    def from_collection(cls, collection: ImageDirectory) -> "CollectionRecord":
         return CollectionRecord(
             collection_name=collection.name, collection_path=str(collection.path)
         )

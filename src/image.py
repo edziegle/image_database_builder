@@ -1,4 +1,5 @@
 import mimetypes
+from dataclasses import dataclass
 from pathlib import Path
 
 from config import config
@@ -6,10 +7,20 @@ from config import config
 EXTENSIONS = config["images"]["extensions"].split(",")
 
 
-class Image(object):
+@dataclass
+class Image:
     __slots__ = "path", "parent", "image_type", "metadata"
 
     def __init__(self, path: Path, parent: Path, image_type: str, metadata: dict):
+        """
+        Image object.
+
+        Args:
+            path: Path to the image file.
+            parent:
+            image_type:
+            metadata:
+        """
         self.path = path
         self.parent = parent
         self.image_type = image_type
