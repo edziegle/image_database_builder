@@ -4,20 +4,22 @@ from datetime import datetime
 from errno import EEXIST
 from os import walk
 from pathlib import Path
+from typing import Dict, List, Tuple, TypeAlias
 
-import click
+from pymongo.collection import Collection
+from tqdm import tqdm
 
-from imagedirectory import ImageDirectory, is_image_directory
-from database import (
-    CollectionRecord,
-    ImageRecord,
-    Session,
-    get_session,
-    initialize_database,
-)
+from data_model.image import Image
+from data_model.imagedirectory import ImageDirectory, is_image_directory
+from data_model.mongo_support import PydanticObjectId as ObjectId
+from data_model.subject import Subject, is_subject
+from database import get_collection, get_db, get_db_client
+
+ImageDirTuple: TypeAlias = Tuple[ImageDirectory, List[Image]]
+SubjectTuple: TypeAlias = Tuple[Subject, List[ImageDirTuple]]
 
 
-def scan(root_dir: str) -> list:
+def scan(root_dir: str) -> Dict[str, List[SubjectTuple] | List[ImageDirTuple]]:
     """
     Finds all "collections" under a given directory.
 
@@ -29,41 +31,30 @@ def scan(root_dir: str) -> list:
         root_dir: path to directory to recursively scan through.
     Returns: list of ImageDirectory objects.
     """
-    image_dir_list = []
-    for dir_tuple in (x for x in walk(root_dir)):
+    scan_results = {"subjects": [], "image_directories": []}
+    for dir_tuple in (
+        x for x in walk(root_dir)
+    ):  # exhausting the generator right away, may change later
         if is_image_directory(dir_tuple):
-            image_dir_list.append(ImageDirectory.from_dir_tuple(dir_tuple))
+            scan_results["image_directories"].append(
+                ImageDirectory.from_dir_tuple(dir_tuple)
+            )
+        elif is_subject(dir_tuple):
+            logging.info(f"Found subject: {dir_tuple[0]}")
+            subject = Subject(name=Path(dir_tuple[0]).name, path=dir_tuple[0])
+            subjects_img_dirs = []
+            for sub_dir in dir_tuple[1]:
+                sub_dir_path = Path(dir_tuple[0]) / sub_dir
+                sub_dir_tuple = next(
+                    x for x in walk(sub_dir_path) if is_image_directory(x)
+                )
+                subjects_img_dirs.append(ImageDirectory.from_dir_tuple(sub_dir_tuple))
 
-    return image_dir_list
+            scan_results["subjects"].append((subject, subjects_img_dirs))
+        else:
+            logging.info(f"Skipping: {dir_tuple[0]}")
 
-
-def stage_dir_in_database(
-    collection: ImageDirectory, session: Session
-) -> CollectionRecord:
-    """
-    Stages a given Collection object in the database as a CollectionRecord.
-    :param collection: Collection object.
-    :param session: database session.
-    :return: CollectionRecord generated from input collection.
-    """
-    collection_record = CollectionRecord.from_collection(collection)
-    session.add(collection_record)
-    session.flush()
-    return collection_record
-
-
-def stage_images_in_database(
-    images: list, collection_record: CollectionRecord, session: Session
-):
-    """
-    Stages all images from the given collection record in a database as ImageRecords.
-    :param images: list of Image objects.
-    :param collection_record: CollectionRecord object corresponding to the image set.
-    :param session: database session.
-    """
-    for image in images:
-        image_record = ImageRecord.from_image(image, collection_record)
-        session.add(image_record)
+    return scan_results
 
 
 def make_sure_path_exists(path):
@@ -74,27 +65,47 @@ def make_sure_path_exists(path):
             raise
 
 
-@click.command()
-@click.argument("target_dir", type=click.Path(exists=True))
 def main(target_dir: Path):
-    logging.info("Initializing database.")
-    initialize_database()
+    logging.info("Loading database.")
+    db = get_db(get_db_client())
+    image_dir_collection = get_collection(db, "image_directories")
+    image_collection = get_collection(db, "images")
+
     logging.info(f'Collecting photos and sub-directories of "{target_dir}".')
-    collections = scan(str(target_dir))
+    scan_results = scan(str(target_dir))
 
-    session = get_session()
+    subject_pbar = tqdm(
+        scan_results["subjects"], desc="Inserting subjects into database", leave=False
+    )
+    for pair in subject_pbar:
+        subject = pair[0]
+        sub_dir_pairs = pair[1]
+        for sub_dir_pair in sub_dir_pairs:
+            image_dir_id = insert_image_dir(
+                sub_dir_pair[0], sub_dir_pair[1], image_collection, image_dir_collection
+            )
+            subject.image_dir_ids.append(image_dir_id)
 
-    for collection in collections:
-        collection_record = stage_dir_in_database(collection, session)
-        stage_images_in_database(collection.images, collection_record, session)
-        logging.info(
-            f"{collection.name} : {len(collection.images)} : {collection.path}"
+    # insert any image directories that are not part of a subject
+    for sub_dir_pair in scan_results["image_directories"]:
+        insert_image_dir(
+            sub_dir_pair[0], sub_dir_pair[1], image_collection, image_dir_collection
         )
 
-    logging.info("Adding new items to database.")
-    session.flush()
-    session.commit()
     logging.info("Complete.")
+
+
+def insert_image_dir(
+    image_dir: ImageDirectory,
+    images: List[Image],
+    image_collection: Collection,
+    image_dir_collection: Collection,
+) -> ObjectId:
+    image_pbar = tqdm(images, desc="Images", unit="image", leave=False)
+    for image in image_pbar:
+        image_id = image_collection.insert_one(image.dict()).inserted_id
+        image_dir.image_ids.append(image_id)
+    return image_dir_collection.insert_one(image_dir.dict())
 
 
 if __name__ == "__main__":
@@ -111,4 +122,5 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    main()
+
+    main(Path("/Users/ericziegler/dev/image_database_builder/bin/sampleindex"))

@@ -1,4 +1,4 @@
-from imagedirectory import is_image_directory
+from data_model.imagedirectory import is_image_directory
 
 
 def test_is_image_directory_returns_true_when_tuple_has_no_sub_dirs_and_has_images():

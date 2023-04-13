@@ -1,42 +1,30 @@
 import mimetypes
-from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import Optional
+
+from pydantic import BaseModel
 
 from config import config
 
 EXTENSIONS = config["images"]["extensions"].split(",")
 
 
-@dataclass
-class Image:
-    __slots__ = "path", "parent", "image_type", "metadata"
-
-    def __init__(self, path: Path, parent: Path, image_type: str, metadata: dict):
-        """
-        Image object.
-
-        Args:
-            path: Path to the image file.
-            parent:
-            image_type:
-            metadata:
-        """
-        self.path = path
-        self.parent = parent
-        self.image_type = image_type
-        self.metadata = metadata
-
-    def __repr__(self):
-        return f"Image({self.parent.name!r}: {self.path!r})"
-
-    def __str__(self):
-        return f"({self.parent.name!s}: {self.path!s})"
+class Image(BaseModel):
+    path: str
+    parent: str
+    image_type: str
+    metadata: dict
+    created_at: str = str(datetime.utcnow())
+    updated_at: Optional[str] = None
 
     @classmethod
-    def from_path_str(cls, path: str, parent: Path) -> "Image":
+    def from_path_str(cls, path: str, parent: str) -> "Image":
         image_type = mimetypes.guess_type(path)
         metadata = parse_metadata(path)
-        return Image(Path(path), parent, image_type[0], metadata)
+        return Image(
+            path=path, parent=parent, image_type=image_type[0], metadata=metadata
+        )
 
     def get_full_path(self) -> Path:
         return Path(self.parent, self.path)

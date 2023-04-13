@@ -70,5 +70,5 @@ def make_test_dir():
     return test_dir
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     make_test_dir()

@@ -1,4 +1,4 @@
-from image import EXTENSIONS, get_images, has_images, is_image
+from data_model.image import EXTENSIONS, get_images, has_images, is_image
 
 
 def test_valid_image_jpg():
